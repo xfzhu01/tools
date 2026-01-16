@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>北京裁员补偿个税计算器 (2025专业版)</title>
+    <title>北京裁员补偿计算器 (2025专业版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
         .formula-box { background-color: #f8fafc; border-left: 4px solid #3b82f6; }
-        .legal-tag { background-color: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
+        .result-row { border-bottom: 1px solid #f1f5f9; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; }
+        .result-row:last-child { border-bottom: none; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -17,12 +18,11 @@
         <!-- 输入卡片 -->
         <div class="card p-6 md:p-8 mb-6">
             <div class="flex items-center justify-between mb-6">
-                <h1 class="text-2xl font-bold text-slate-800">离职补偿计算器</h1>
-                <span class="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">北京 2025.1版</span>
+                <h1 class="text-2xl font-bold text-slate-800 tracking-tight">离职补偿计算器</h1>
+                <span class="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full border border-blue-700 shadow-sm">北京 2025.01版</span>
             </div>
 
             <div class="space-y-5">
-                <!-- 薪资输入 -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="space-y-1">
                         <label class="block text-sm font-semibold text-slate-600">前12个月平均工资 (税前)</label>
@@ -32,15 +32,14 @@
                         </div>
                     </div>
                     <div class="space-y-1">
-                        <label class="block text-sm font-semibold text-slate-600">其他补偿 (选填)</label>
+                        <label class="block text-sm font-semibold text-blue-700">其他税后收入 (如报销、净奖金)</label>
                         <div class="relative">
-                            <span class="absolute left-3 top-3 text-slate-400">¥</span>
-                            <input type="number" id="otherAmount" placeholder="年假、奖金等" class="w-full pl-8 p-3 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition bg-blue-50/30">
+                            <span class="absolute left-3 top-3 text-blue-300">¥</span>
+                            <input type="number" id="otherAmount" placeholder="直接计入到手金额" class="w-full pl-8 p-3 border border-blue-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition bg-blue-50/50">
                         </div>
                     </div>
                 </div>
 
-                <!-- 计算基数选择 -->
                 <div class="space-y-2">
                     <label class="block text-sm font-semibold text-slate-600">计算基数逻辑</label>
                     <div class="flex p-1 bg-slate-100 rounded-xl">
@@ -49,7 +48,6 @@
                     </div>
                 </div>
 
-                <!-- 日期选择 -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
                         <label class="block text-sm font-semibold text-slate-600">入职日期</label>
@@ -61,9 +59,8 @@
                     </div>
                 </div>
 
-                <!-- 方案 -->
                 <div class="space-y-1">
-                    <label class="block text-sm font-semibold text-slate-600">补偿系数</label>
+                    <label class="block text-sm font-semibold text-slate-600">补偿方案</label>
                     <select id="planType" class="w-full p-3 border border-slate-200 rounded-xl focus:border-blue-500 outline-none bg-white">
                         <option value="N">N (标准经济补偿)</option>
                         <option value="N+1" selected>N+1 (含代通知金)</option>
@@ -71,91 +68,79 @@
                     </select>
                 </div>
 
-                <button onclick="calculate()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-[0.98]">立即计算结果</button>
+                <button onclick="calculate()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-[0.98]">立即生成结算单</button>
             </div>
         </div>
 
         <!-- 结果展示 -->
         <div id="result" class="hidden space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <!-- 核心汇总结果 -->
-            <div class="card p-6 border-t-4 border-green-500">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                    <div>
-                        <p class="text-slate-500 text-xs font-bold uppercase mb-1">税前总补偿</p>
-                        <p id="resTotalPre" class="text-xl font-bold text-slate-800">¥ 0.00</p>
+            
+            <!-- 详细汇总单 -->
+            <div class="card p-6 md:p-8">
+                <h2 class="text-xl font-black text-slate-800 mb-6 flex items-center border-b pb-4">
+                    <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 2v-6m-9-3H9m12 0h-3.586a1 1 0 01-.707-.293L15.414 4.414a1 1 0 00-.707-.293H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V7z"></path></svg>
+                    结算明细确认单
+                </h2>
+
+                <div class="space-y-1">
+                    <div class="result-row">
+                        <span class="text-slate-500 font-medium">1. 税前补偿金额 (Severance Pre-tax)</span>
+                        <span id="resSeverancePre" class="font-bold text-slate-900">¥ 0.00</span>
                     </div>
-                    <div class="md:border-x border-slate-100 px-4">
-                        <p class="text-red-500 text-xs font-bold uppercase mb-1">预计代扣个税</p>
-                        <p id="resTax" class="text-xl font-bold text-red-500">- ¥ 0.00</p>
+                    <div class="result-row bg-red-50/30 px-2 -mx-2 rounded-lg">
+                        <span class="text-red-500 font-medium">2. 补偿金扣税金额 (Severance Tax)</span>
+                        <span id="resTax" class="font-bold text-red-600">- ¥ 0.00</span>
                     </div>
-                    <div>
-                        <p class="text-green-600 text-xs font-bold uppercase mb-1">最终到手金额</p>
-                        <p id="resTotalPost" class="text-3xl font-black text-green-600">¥ 0.00</p>
+                    <div class="result-row italic">
+                        <span class="text-slate-500 font-medium">3. 补偿金到手 (税后 1 - 2)</span>
+                        <span id="resSeverancePost" class="font-bold text-slate-700">¥ 0.00</span>
+                    </div>
+                    <div class="result-row bg-blue-50/50 px-2 -mx-2 rounded-lg">
+                        <span class="text-blue-600 font-medium">4. 其他税后收入 (Other Tax-free)</span>
+                        <span id="resOtherPost" class="font-bold text-blue-600">+ ¥ 0.00</span>
+                    </div>
+                    
+                    <div class="mt-8 pt-6 border-t-2 border-slate-900 flex justify-between items-end">
+                        <div class="text-left">
+                            <p class="text-xs font-black text-slate-400 uppercase">最终总计到手</p>
+                            <p class="text-xs text-slate-400 mt-1 italic">Total Net Amount</p>
+                        </div>
+                        <div id="resTotalPost" class="text-4xl font-black text-green-600">¥ 0.00</div>
                     </div>
                 </div>
             </div>
 
-            <!-- 公式详述 -->
-            <div class="card p-6 md:p-8">
-                <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
-                    <span class="bg-blue-100 text-blue-600 p-1 rounded mr-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                    </span>
-                    计算步骤详述 & 依据
-                </h3>
+            <!-- 逻辑拆解 -->
+            <div class="card p-6 md:p-8 bg-slate-50 border border-slate-100">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6 leading-none">计算逻辑拆解</h3>
 
-                <div class="space-y-8 text-sm text-slate-700">
-                    <!-- 步骤1 -->
-                    <div>
-                        <p class="font-bold text-slate-900 mb-2">Step 1: 确定工龄与补偿系数 (N)</p>
-                        <div class="formula-box p-4 rounded-lg">
-                            <p id="calcTenure" class="mb-2">实际在职：-</p>
-                            <p id="calcNLogic" class="text-blue-800 font-medium">N 取值公式：年数 + (剩余月数 ≥ 6 ? 1 : 0.5)</p>
-                            <div class="mt-2 text-xs text-slate-500">依据：《劳动合同法》第47条</div>
+                <div class="space-y-6 text-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-xl border border-slate-200">
+                            <p class="text-xs text-slate-400 mb-1">在职时长</p>
+                            <p id="calcTenure" class="font-bold text-slate-800">-</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200">
+                            <p class="text-xs text-slate-400 mb-1">补偿系数 (N)</p>
+                            <p id="calcN" class="font-bold text-slate-800">-</p>
                         </div>
                     </div>
 
-                    <!-- 步骤2 -->
-                    <div>
-                        <p class="font-bold text-slate-900 mb-2">Step 2: 确定月补偿基数</p>
-                        <div class="formula-box p-4 rounded-lg">
-                            <p id="calcBase" class="mb-1 text-blue-800 font-medium">-</p>
-                            <p id="calcBaseLaw" class="text-xs text-slate-500 italic">北京标准：2023年法人平均月薪 15,701.08 元，3倍封顶值为 47,103.25 元。</p>
-                        </div>
-                    </div>
-
-                    <!-- 步骤3 -->
-                    <div>
-                        <p class="font-bold text-slate-900 mb-2">Step 3: 税前金额总计</p>
-                        <div class="formula-box p-4 rounded-lg">
-                            <p id="calcFormula" class="mb-1 font-mono text-blue-800 font-bold">-</p>
-                            <p class="text-xs text-slate-500">注：如选N+1，其中的“1”为代通知金，通常按实际工资而非封顶基数计算。</p>
-                        </div>
-                    </div>
-
-                    <!-- 步骤4 -->
-                    <div>
-                        <p class="font-bold text-slate-900 mb-2">Step 4: 个人所得税计算 (北京)</p>
-                        <div class="formula-box p-4 rounded-lg space-y-2">
-                            <p>北京免税额度：<span class="font-bold">565,239 元</span> (社平年薪 188,413 × 3)</p>
-                            <p id="calcTaxable" class="text-blue-800 font-medium">-</p>
-                            <p id="calcTaxFinal" class="text-red-600 font-bold">-</p>
-                            <div class="mt-2 text-xs text-slate-500 leading-relaxed italic">依据：财税〔2018〕164号文。离职补偿不并入当年综合所得，单独适用综合所得税率表。</div>
-                        </div>
+                    <div class="formula-box p-4 rounded-lg">
+                        <p class="font-bold text-slate-700 mb-1 leading-none">税金计算说明：</p>
+                        <p id="calcTaxDetail" class="text-xs text-slate-500 leading-relaxed italic mt-2">
+                            依据“财税〔2018〕164号”：北京免税额 565,239 元。超出部分单独计税。
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
-
-        <p class="text-center text-slate-400 text-[11px] mt-8 mb-12">© 2025 北京裁员补偿计算器 · 仅供参考</p>
+        <p class="text-center text-slate-400 text-[11px] mt-8 mb-12 uppercase tracking-tighter">Beijing Severance Calculator v2025.1</p>
     </div>
 
     <script>
-        const BEIJING_ANNUAL_AVG = 188413;
-        const BEIJING_MONTHLY_AVG = 15701.08;
         const BEIJING_TAX_FREE = 565239;
         const BEIJING_BASE_CAP = 47103.25;
-
         let currentBaseType = 'legal';
 
         function setBaseType(type) {
@@ -171,71 +156,66 @@
             const leaveDate = new Date(document.getElementById('leaveDate').value);
             const planType = document.getElementById('planType').value;
 
-            if (!avgSalary || isNaN(joinDate) || isNaN(leaveDate)) {
-                alert("请填写月平均工资和完整的日期"); return;
-            }
+            if (!avgSalary || isNaN(joinDate) || isNaN(leaveDate)) { alert("请输入完整信息"); return; }
 
-            // 1. 精确日期差计算
+            // 1. 日期计算
             let years = leaveDate.getFullYear() - joinDate.getFullYear();
             let months = leaveDate.getMonth() - joinDate.getMonth();
             let days = leaveDate.getDate() - joinDate.getDate();
             if (days < 0) { months--; const prevMonthDays = new Date(leaveDate.getFullYear(), leaveDate.getMonth(), 0).getDate(); days += prevMonthDays; }
             if (months < 0) { years--; months += 12; }
 
-            // 2. N 计算逻辑
+            // 2. N 值折算
             let nVal = years;
-            if (months >= 6) nVal += 1;
-            else if (months > 0 || days > 0) nVal += 0.5;
+            if (months >= 6) nVal += 1; else if (months > 0 || days > 0) nVal += 0.5;
 
-            // 3. 基数逻辑
+            // 3. 基数与系数确定
             let finalN = nVal;
             let compBase = avgSalary;
-            let baseNote = "";
             if (currentBaseType === 'legal' && avgSalary > BEIJING_BASE_CAP) {
                 compBase = BEIJING_BASE_CAP;
-                baseNote = `月薪 ¥${avgSalary.toLocaleString()} 超过封顶线，按 ¥${BEIJING_BASE_CAP} 计算。`;
-                if (finalN > 12) { finalN = 12; baseNote += " 且高薪人员 N 最大为 12。"; }
-            } else {
-                baseNote = `按实际月薪 ¥${avgSalary.toLocaleString()} 计算，不设封顶限制。`;
+                if (finalN > 12) finalN = 12;
             }
 
-            // 4. 总额计算
-            let formulaText = "";
-            let severancePart = 0;
+            // 4. 计算税前补偿金 (仅法定部分)
+            let severancePreTax = 0;
             if (planType === "N") {
-                severancePart = finalN * compBase;
-                formulaText = `${finalN}N × ${compBase.toFixed(2)}`;
+                severancePreTax = finalN * compBase;
             } else if (planType === "N+1") {
-                severancePart = (finalN * compBase) + avgSalary;
-                formulaText = `(${finalN}N × ${compBase.toFixed(2)}) + 1个月代通知金(${avgSalary.toFixed(2)})`;
+                severancePreTax = (finalN * compBase) + avgSalary;
             } else if (planType === "2N") {
-                severancePart = 2 * finalN * compBase;
-                formulaText = `2 × ${finalN}N × ${compBase.toFixed(2)}`;
+                severancePreTax = 2 * finalN * compBase;
             }
-            const totalPreTax = severancePart + otherAmount;
-            if (otherAmount > 0) formulaText += ` + 其他收入(${otherAmount.toFixed(2)})`;
 
-            // 5. 税务
+            // 5. 个税逻辑 (只针对补偿金)
             let tax = 0;
-            let taxableIncome = totalPreTax - BEIJING_TAX_FREE;
-            let taxStepInfo = `应纳税所得额：¥${totalPreTax.toLocaleString()} - ¥${BEIJING_TAX_FREE} (免税额) = ¥${taxableIncome > 0 ? taxableIncome.toLocaleString() : 0}`;
+            let taxableIncome = severancePreTax - BEIJING_TAX_FREE;
             if (taxableIncome > 0) {
                 tax = calculateTax(taxableIncome);
             }
+            let severancePostTax = severancePreTax - tax;
 
-            // UI 渲染
+            // 6. 汇总
+            let totalFinal = severancePostTax + otherAmount;
+
+            // UI 渲染结果区域
             document.getElementById('result').classList.remove('hidden');
-            document.getElementById('resTotalPre').innerText = "¥ " + totalPreTax.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('resTax').innerText = "- ¥ " + tax.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('resTotalPost').innerText = "¥ " + (totalPreTax - tax).toLocaleString(undefined, {minimumFractionDigits: 2});
             
-            // 步骤文本
-            document.getElementById('calcTenure').innerText = `实际在职时长：${years}年 ${months}个月 ${days}天`;
-            document.getElementById('calcNLogic').innerText = `核定补偿系数：N = ${finalN}`;
-            document.getElementById('calcBase').innerText = baseNote;
-            document.getElementById('calcFormula').innerText = `税前总额 = ${formulaText} = ¥${totalPreTax.toLocaleString()}`;
-            document.getElementById('calcTaxable').innerText = taxStepInfo;
-            document.getElementById('calcTaxFinal').innerText = taxableIncome > 0 ? `经对照年度税率表，计算个税为：¥${tax.toLocaleString()}` : "总额未超免税点，个人所得税为 0。";
+            // 结算单明细
+            document.getElementById('resSeverancePre').innerText = "¥ " + severancePreTax.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('resTax').innerText = "- ¥ " + tax.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('resSeverancePost').innerText = "¥ " + severancePostTax.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('resOtherPost').innerText = "+ ¥ " + otherAmount.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('resTotalPost').innerText = "¥ " + totalFinal.toLocaleString(undefined, {minimumFractionDigits: 2});
+            
+            // 底部逻辑拆解
+            document.getElementById('calcTenure').innerText = `${years}年 ${months}个月 ${days}天`;
+            document.getElementById('calcN').innerText = `${finalN}`;
+            
+            const taxDetailText = taxableIncome > 0 
+                ? `您的税前补偿(¥${severancePreTax.toLocaleString()})已超北京免税额(¥${BEIJING_TAX_FREE})。应纳税部分 ¥${taxableIncome.toLocaleString()} 适用年度综合所得税率表计算，共扣税 ¥${tax.toLocaleString()}。`
+                : `您的税前补偿未超过北京免税额度(¥${BEIJING_TAX_FREE})，依法全额免个税。`;
+            document.getElementById('calcTaxDetail').innerText = taxDetailText;
         }
 
         function calculateTax(income) {
@@ -248,9 +228,7 @@
                 { limit: 960000, rate: 0.35, deduction: 85920 },
                 { limit: Infinity, rate: 0.45, deduction: 181920 }
             ];
-            for (let b of brackets) {
-                if (income <= b.limit) return income * b.rate - b.deduction;
-            }
+            for (let b of brackets) { if (income <= b.limit) return income * b.rate - b.deduction; }
             return 0;
         }
     </script>
