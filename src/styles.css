@@ -1,0 +1,6 @@
+/* Keep this tiny; Tailwind is loaded via CDN in index.html. */
+html,
+body {
+  height: 100%;
+}
+
